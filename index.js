@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { connect } = require("./config/db");
 const subscriberRoutes = require("./routes/subscriber.routes");
-const promptRoute = require("./routes/promptConsultation");
+// const promptRoute = require("./routes/promptConsultation");
 const propertList = require("./routes/property.routes");
 const BlogRoute = require("./routes/blog.routes");
 const path = require("path");
@@ -18,7 +18,7 @@ app.use(cors());
 
 // Routes
 app.use("/", subscriberRoutes);
-app.use("/api", promptRoute);
+// app.use("/api", promptRoute);
 app.use("/api/properties", propertList);
 app.use("/api/blogs", BlogRoute);
 app.use("/api/listing", listingRoutes);
