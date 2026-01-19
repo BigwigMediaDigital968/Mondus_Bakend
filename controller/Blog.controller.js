@@ -66,7 +66,7 @@ exports.updateBlogPostBySlug = async (req, res) => {
     const updatedBlogPost = await BlogPost.findOneAndUpdate(
       { slug },
       updateFields,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedBlogPost) {

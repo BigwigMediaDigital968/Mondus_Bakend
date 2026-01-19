@@ -42,7 +42,7 @@ router.put("/:id", async (req, res) => {
     const updatedOpportunity = await Opportunity.findByIdAndUpdate(
       id,
       { title, description, location, type },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedOpportunity) {

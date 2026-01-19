@@ -8,6 +8,7 @@ const BlogRoute = require("./routes/blog.routes");
 const path = require("path");
 const listingRoutes = require("./routes/listing.route");
 const opportunityRoutes = require("./routes/opportunity.route");
+const notifyRoutes = require("./routes/notifyRoutes");
 
 require("dotenv").config();
 
@@ -23,6 +24,7 @@ app.use("/api/properties", propertList);
 app.use("/api/blogs", BlogRoute);
 app.use("/api/listing", listingRoutes);
 app.use("/api/opportunity", opportunityRoutes);
+app.use("/api/notify", notifyRoutes);
 
 // Start server
 app.listen(process.env.PORT, async () => {
