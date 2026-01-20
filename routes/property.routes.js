@@ -35,7 +35,7 @@ router.get("/rent", async (req, res) => {
     const rentData = properties.filter(
       (item) =>
         item?.properties.property_purpose.key_0 === "Rent" ||
-        item?.name?.toLowerCase().includes("Rent")
+        item?.name?.toLowerCase().includes("Rent"),
     );
     res.json(rentData);
   } catch (error) {
@@ -50,7 +50,7 @@ router.get("/sale", async (req, res) => {
     const saleData = properties.filter(
       (item) =>
         item?.properties.property_purpose.key_0 === "Sale" ||
-        item?.name?.toLowerCase().includes("Sale")
+        item?.name?.toLowerCase().includes("Sale"),
     );
     res.json(saleData);
   } catch (error) {

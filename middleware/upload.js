@@ -1,36 +1,62 @@
 const multer = require("multer");
 const path = require("path");
 
-// Configure storage
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Make sure this folder exists
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueName + path.extname(file.originalname).toLowerCase());
   },
 });
 
-// Filter to allow only images
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
-  const extname = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase(),
-  );
-  const mimetype = allowedTypes.test(file.mimetype);
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "image/avif",
+    "image/bmp",
+    "image/tiff",
+  ];
 
-  if (extname && mimetype) {
+  const allowedExt = [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".avif",
+    ".bmp",
+    ".tiff",
+  ];
+
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (allowedMimeTypes.includes(file.mimetype) && allowedExt.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed!"));
+    cb(
+      new multer.MulterError(
+        "LIMIT_FILE_TYPE",
+        "Only image files are allowed (jpg, png, webp, gif, svg, avif, bmp, tiff)",
+      ),
+    );
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB per image
+    files: 10,
+  },
 });
 
 module.exports = upload;

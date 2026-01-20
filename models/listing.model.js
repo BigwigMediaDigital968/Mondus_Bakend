@@ -10,7 +10,7 @@ const listingSchema = new mongoose.Schema(
     size: { type: String, required: true },
     message: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Listing = mongoose.model("Listing", listingSchema);

@@ -37,6 +37,7 @@ router.post("/", async (req, res) => {
         <p>Thank you for listing your property with <strong>Mondus</strong>.</p>
         <p>We’ve received the following details:</p>
         <ul>
+          <li><strong>Phone:</strong> ${phone}</li>
           <li><strong>Address:</strong> ${address}</li>
           <li><strong>Bedrooms:</strong> ${bedrooms}</li>
           <li><strong>Size:</strong> ${size}</li>

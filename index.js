@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 const { connect } = require("./config/db");
 const subscriberRoutes = require("./routes/subscriber.routes");
 // const promptRoute = require("./routes/promptConsultation");
@@ -9,13 +10,13 @@ const path = require("path");
 const listingRoutes = require("./routes/listing.route");
 const opportunityRoutes = require("./routes/opportunity.route");
 const notifyRoutes = require("./routes/notifyRoutes");
-
-require("dotenv").config();
+const propertyRoutes = require("./routes/propertyRoutes");
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use("/uploads", express.static("uploads"));
 
 // Routes
 app.use("/", subscriberRoutes);
@@ -25,6 +26,7 @@ app.use("/api/blogs", BlogRoute);
 app.use("/api/listing", listingRoutes);
 app.use("/api/opportunity", opportunityRoutes);
 app.use("/api/notify", notifyRoutes);
+app.use("/api/property", propertyRoutes);
 
 // Start server
 app.listen(process.env.PORT, async () => {
