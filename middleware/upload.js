@@ -1,9 +1,24 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+// ✅ Ensure directories exist
+const ensureDir = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
+
+ensureDir("uploads/images");
+ensureDir("uploads/brochures");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    if (file.fieldname === "propertyBrochure") {
+      cb(null, "uploads/brochures");
+    } else {
+      cb(null, "uploads/images");
+    }
   },
   filename: (req, file, cb) => {
     const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -11,51 +26,65 @@ const storage = multer.diskStorage({
   },
 });
 
+const imageMimeTypes = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/avif",
+  "image/bmp",
+  "image/tiff",
+];
+
+const imageExt = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".webp",
+  ".svg",
+  ".avif",
+  ".bmp",
+  ".tiff",
+];
+
 const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "image/avif",
-    "image/bmp",
-    "image/tiff",
-  ];
-
-  const allowedExt = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-    ".svg",
-    ".avif",
-    ".bmp",
-    ".tiff",
-  ];
-
   const ext = path.extname(file.originalname).toLowerCase();
 
-  if (allowedMimeTypes.includes(file.mimetype) && allowedExt.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(
-      new multer.MulterError(
-        "LIMIT_FILE_TYPE",
-        "Only image files are allowed (jpg, png, webp, gif, svg, avif, bmp, tiff)",
-      ),
-    );
+  // ✅ PDF brochure
+  if (
+    file.fieldname === "propertyBrochure" &&
+    file.mimetype === "application/pdf" &&
+    ext === ".pdf"
+  ) {
+    return cb(null, true);
   }
+
+  // ✅ Property images
+  if (
+    file.fieldname === "propertyImages" &&
+    imageMimeTypes.includes(file.mimetype) &&
+    imageExt.includes(ext)
+  ) {
+    return cb(null, true);
+  }
+
+  cb(
+    new multer.MulterError(
+      "LIMIT_FILE_TYPE",
+      "Invalid file type. Only images and PDF brochure allowed",
+    ),
+  );
 };
 
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per image
-    files: 10,
+    fileSize: 10 * 1024 * 1024, // 10MB per file
+    files: 11, // 10 images + 1 brochure
   },
 });
 

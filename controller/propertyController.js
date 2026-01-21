@@ -2,27 +2,73 @@ const PropertyListing = require("../models/propertyListingmodel.js");
 const fs = require("fs");
 const path = require("path");
 
+/* ================== HELPERS ================== */
+const parseArray = (value) =>
+  value ? value.split(",").map((i) => i.trim()) : [];
+
 /**
- * ADD PROPERTY
+ * ================== ADD PROPERTY ==================
  */
 exports.addProperty = async (req, res) => {
   try {
-    // Extract uploaded images
-    const images = req.files?.map((file) => `/uploads/${file.filename}`);
+    const images =
+      req.files?.propertyImages?.map(
+        (file) => `/uploads/images/${file.filename}`,
+      ) || [];
 
-    if (!images || images.length === 0) {
+    if (images.length === 0) {
       return res.status(400).json({
         success: false,
         message: "At least one property image is required",
       });
     }
 
+    const brochure = req.files?.propertyBrochure?.[0]
+      ? `/uploads/brochures/${req.files.propertyBrochure[0].filename}`
+      : null;
+
+    /* 🔥 AUTO-GENERATE SLUG IF NOT PROVIDED */
+    let slug = req.body.slug;
+
+    if (!slug || !slug.trim()) {
+      slug = req.body.propertyName
+        ?.toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+    }
+
+    const baseSlug = slug;
+    let counter = 1;
+
+    while (await PropertyListing.exists({ slug })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
     const propertyData = {
       ...req.body,
+
+      slug,
+
+      /* NUMBERS */
+      price: Number(req.body.price),
       bedroom: Number(req.body.bedroom),
       bathroom: Number(req.body.bathroom),
       sizeSqft: Number(req.body.sizeSqft),
+
+      /* ARRAYS */
+      highlights: parseArray(req.body.highlights),
+      featuresAmenities: parseArray(req.body.featuresAmenities),
+      nearby: parseArray(req.body.nearby),
+      extraHighlights: parseArray(req.body.extraHighlights),
+
+      /* MEDIA / LINKS */
+      videoLink: req.body.videoLink || null,
+      googleMapUrl: req.body.googleMapUrl || null,
+
       propertyImages: images,
+      propertyBrochure: brochure,
     };
 
     const property = await PropertyListing.create(propertyData);
@@ -41,7 +87,7 @@ exports.addProperty = async (req, res) => {
 };
 
 /**
- * GET ALL PROPERTIES (WITH FILTERS)
+ * ================== GET ALL PROPERTIES (WITH FILTERS) ==================
  */
 exports.getProperties = async (req, res) => {
   try {
@@ -53,18 +99,30 @@ exports.getProperties = async (req, res) => {
       subArea,
       minSqft,
       maxSqft,
+      minPrice,
+      maxPrice,
       status,
+      developerName,
     } = req.query;
 
     const filter = {};
 
     if (listingType) filter.listingType = listingType;
     if (propertyType) filter.propertyType = propertyType;
+    if (developerName) filter.developerName = developerName;
     if (bedroom) filter.bedroom = Number(bedroom);
     if (bathroom) filter.bathroom = Number(bathroom);
     if (subArea) filter.subArea = subArea;
     if (status !== undefined) filter.status = status === "true";
 
+    /* PRICE FILTER */
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    /* SIZE FILTER */
     if (minSqft || maxSqft) {
       filter.sizeSqft = {};
       if (minSqft) filter.sizeSqft.$gte = Number(minSqft);
@@ -89,11 +147,15 @@ exports.getProperties = async (req, res) => {
 };
 
 /**
- * GET SINGLE PROPERTY
+ * ================== GET SINGLE PROPERTY (ID OR SLUG) ==================
  */
-exports.getPropertyById = async (req, res) => {
+exports.getSingleProperty = async (req, res) => {
   try {
-    const property = await PropertyListing.findById(req.params.id);
+    const { idOrSlug } = req.params;
+
+    const property = await PropertyListing.findOne({
+      $or: [{ _id: idOrSlug }, { slug: idOrSlug }],
+    });
 
     if (!property) {
       return res.status(404).json({
@@ -109,13 +171,13 @@ exports.getPropertyById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Invalid ID or slug",
     });
   }
 };
 
 /**
- * UPDATE PROPERTY
+ * ================== UPDATE PROPERTY ==================
  */
 exports.updateProperty = async (req, res) => {
   try {
@@ -128,20 +190,58 @@ exports.updateProperty = async (req, res) => {
       });
     }
 
+    /* 🔥 AUTO SLUG UPDATE */
+    let slug = req.body.slug;
+
+    if (!slug && req.body.propertyName) {
+      slug = req.body.propertyName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+    }
+
     const updateData = {
       ...req.body,
+
+      slug,
+
+      price: req.body.price && Number(req.body.price),
       bedroom: req.body.bedroom && Number(req.body.bedroom),
       bathroom: req.body.bathroom && Number(req.body.bathroom),
       sizeSqft: req.body.sizeSqft && Number(req.body.sizeSqft),
+
+      videoLink: req.body.videoLink || null,
+      googleMapUrl: req.body.googleMapUrl || null,
     };
 
-    // 🔥 If new images uploaded → delete old images
-    if (req.files && req.files.length > 0) {
-      deleteImages(property.propertyImages);
+    /* ARRAY UPDATES */
+    if (req.body.highlights)
+      updateData.highlights = parseArray(req.body.highlights);
 
-      updateData.propertyImages = req.files.map(
-        (file) => `/uploads/${file.filename}`,
+    if (req.body.featuresAmenities)
+      updateData.featuresAmenities = parseArray(req.body.featuresAmenities);
+
+    if (req.body.nearby) updateData.nearby = parseArray(req.body.nearby);
+
+    if (req.body.extraHighlights)
+      updateData.extraHighlights = parseArray(req.body.extraHighlights);
+
+    /* 🔥 IMAGE REPLACE */
+    if (req.files?.propertyImages?.length) {
+      deleteFiles(property.propertyImages);
+      updateData.propertyImages = req.files.propertyImages.map(
+        (file) => `/uploads/images/${file.filename}`,
       );
+    }
+
+    /* 🔥 BROCHURE REPLACE */
+    if (req.files?.propertyBrochure?.[0]) {
+      if (property.propertyBrochure) {
+        deleteFiles([property.propertyBrochure]);
+      }
+      updateData.propertyBrochure = `/uploads/brochures/${req.files.propertyBrochure[0].filename}`;
     }
 
     const updatedProperty = await PropertyListing.findByIdAndUpdate(
@@ -164,7 +264,7 @@ exports.updateProperty = async (req, res) => {
 };
 
 /**
- * UPDATE STATUS (ACTIVE / INACTIVE)
+ * ================== UPDATE STATUS ==================
  */
 exports.updatePropertyStatus = async (req, res) => {
   try {
@@ -202,17 +302,20 @@ exports.updatePropertyStatus = async (req, res) => {
 };
 
 /**
- * DELETE PROPERTY
+ * ================== DELETE PROPERTY ==================
  */
+const deleteFiles = (files = []) => {
+  files.forEach((filePath) => {
+    if (!filePath) return;
 
-const deleteImages = (images = []) => {
-  images.forEach((imgPath) => {
-    const fullPath = path.join(__dirname, "..", imgPath);
+    const fullPath = path.join(__dirname, "..", filePath);
 
     if (fs.existsSync(fullPath)) {
-      fs.unlink(fullPath, (err) => {
-        if (err) console.error("Image delete error:", err.message);
-      });
+      try {
+        fs.unlinkSync(fullPath);
+      } catch (err) {
+        console.error("File delete error:", err.message);
+      }
     }
   });
 };
@@ -228,15 +331,16 @@ exports.deleteProperty = async (req, res) => {
       });
     }
 
-    // 🔥 Delete all images from disk
-    deleteImages(property.propertyImages);
+    deleteFiles(property.propertyImages);
+    if (property.propertyBrochure) {
+      deleteFiles([property.propertyBrochure]);
+    }
 
-    // 🔥 Delete DB record
     await property.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: "Property and images deleted successfully",
+      message: "Property, images and brochure deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
