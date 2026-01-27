@@ -149,13 +149,46 @@ exports.getProperties = async (req, res) => {
 /**
  * ================== GET SINGLE PROPERTY (ID OR SLUG) ==================
  */
+// exports.getSingleProperty = async (req, res) => {
+//   try {
+//     const { idOrSlug } = req.params;
+
+//     const property = await PropertyListing.findOne({
+//       $or: [{ _id: idOrSlug }, { slug: idOrSlug }],
+//     });
+
+//     if (!property) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Property not found",
+//       });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       data: property,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Invalid ID or slug",
+//     });
+//   }
+// };
+
 exports.getSingleProperty = async (req, res) => {
   try {
     const { idOrSlug } = req.params;
 
-    const property = await PropertyListing.findOne({
-      $or: [{ _id: idOrSlug }, { slug: idOrSlug }],
-    });
+    let property;
+
+    if (idOrSlug.match(/^[0-9a-fA-F]{24}$/)) {
+      // Valid Mongo ObjectId
+      property = await PropertyListing.findById(idOrSlug);
+    } else {
+      // Slug
+      property = await PropertyListing.findOne({ slug: idOrSlug });
+    }
 
     if (!property) {
       return res.status(404).json({
@@ -171,7 +204,7 @@ exports.getSingleProperty = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Invalid ID or slug",
+      message: error.message,
     });
   }
 };
