@@ -11,7 +11,7 @@ const listingRoutes = require("./routes/listing.route");
 const opportunityRoutes = require("./routes/opportunity.route");
 const notifyRoutes = require("./routes/notifyRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
-
+const developerRoutes = require("./routes/developerRoutes.js");
 const app = express();
 
 app.use(express.json());
@@ -27,8 +27,8 @@ app.use("/api/listing", listingRoutes);
 app.use("/api/opportunity", opportunityRoutes);
 app.use("/api/notify", notifyRoutes);
 app.use("/api/property", propertyRoutes);
+app.use("/api/developers", developerRoutes);
 
-// Start server
 app.listen(process.env.PORT, async () => {
   try {
     await connect();
