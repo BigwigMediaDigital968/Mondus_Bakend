@@ -1,5 +1,16 @@
 const mongoose = require("mongoose");
 
+const faqSchema = new mongoose.Schema({
+  question: {
+    type: String,
+    required: true,
+  },
+  answer: {
+    type: String,
+    required: true,
+  },
+});
+
 const blogPostSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -18,15 +29,29 @@ const blogPostSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+  // ✅ NEW FAQs FIELD
+  faqs: {
+    type: [faqSchema],
+    default: [],
+  },
+
   author: {
-    type: String, // Just the name, no avatar
+    type: String,
     required: true,
   },
+  coverImageAlt: {
+    type: String,
+  },
   coverImage: {
-    type: String, // renamed from 'image' to 'coverImage' for clarity
+    type: String,
     required: true,
   },
   tags: {
+    type: [String],
+    default: [],
+  },
+  slugHistory: {
     type: [String],
     default: [],
   },
