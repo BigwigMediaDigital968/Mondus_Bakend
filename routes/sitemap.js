@@ -5,7 +5,7 @@ const BASE_URL = "https://www.mondusproperties.ae";
 
 router.get("/sitemap.xml", async (req, res) => {
   try {
-    const blogRes = await fetch(`${API_BASE}/api/blogs/viewblog`);
+    const blogRes = await fetch(`${process.env.API_BASE}/api/blogs/viewblog`);
     const blogJson = await blogRes.json();
     const blogs = blogJson.data || blogJson.blogs || [];
 
@@ -16,7 +16,7 @@ router.get("/sitemap.xml", async (req, res) => {
     const rentProps = rentJson.data || [];
 
     const buyRes = await fetch(
-      `${API_BASE}/api/property?listingType=buy&status=true`,
+      `${process.env.API_BASE}/api/property?listingType=buy&status=true`,
     );
     const buyJson = await buyRes.json();
     const buyProps = buyJson.data || [];
