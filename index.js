@@ -12,6 +12,7 @@ const opportunityRoutes = require("./routes/opportunity.route");
 const notifyRoutes = require("./routes/notifyRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
 const developerRoutes = require("./routes/developerRoutes.js");
+const sitemapRoute = require("./routes/sitemap");
 const app = express();
 
 app.use(express.json());
@@ -28,6 +29,7 @@ app.use("/api/opportunity", opportunityRoutes);
 app.use("/api/notify", notifyRoutes);
 app.use("/api/property", propertyRoutes);
 app.use("/api/developers", developerRoutes);
+app.use("/", sitemapRoute);
 
 app.listen(process.env.PORT, async () => {
   try {
