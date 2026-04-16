@@ -1,6 +1,7 @@
 const PropertyListing = require("../models/propertyListingmodel.js");
 const fs = require("fs");
 const path = require("path");
+const { deleteFromCloudinary } = require("../utils/cloudinary.js");
 
 /* ================== HELPERS ================== */
 const parseArray = (value) =>
@@ -11,10 +12,7 @@ const parseArray = (value) =>
  */
 exports.addProperty = async (req, res) => {
   try {
-    const images =
-      req.files?.propertyImages?.map(
-        (file) => `/uploads/images/${file.filename}`,
-      ) || [];
+    const images = req.files?.propertyImages?.map((file) => file.path) || [];
 
     if (images.length === 0) {
       return res.status(400).json({
@@ -23,9 +21,7 @@ exports.addProperty = async (req, res) => {
       });
     }
 
-    const brochure = req.files?.propertyBrochure?.[0]
-      ? `/uploads/brochures/${req.files.propertyBrochure[0].filename}`
-      : null;
+    const brochure = req.files?.propertyBrochure?.[0].path || null;
 
     /* 🔥 AUTO-GENERATE SLUG IF NOT PROVIDED */
     let slug = req.body.slug;
@@ -55,7 +51,7 @@ exports.addProperty = async (req, res) => {
       price: Number(req.body.price),
       bedroom: Number(req.body.bedroom),
       bathroom: Number(req.body.bathroom),
-      sizeSqft: Number(req.body.sizeSqft),
+      sizeSqft: req.body.sizeSqft.trim(),
 
       /* ARRAYS */
       highlights: parseArray(req.body.highlights),
@@ -243,7 +239,7 @@ exports.updateProperty = async (req, res) => {
       price: req.body.price && Number(req.body.price),
       bedroom: req.body.bedroom && Number(req.body.bedroom),
       bathroom: req.body.bathroom && Number(req.body.bathroom),
-      sizeSqft: req.body.sizeSqft && Number(req.body.sizeSqft),
+      sizeSqft: req.body.sizeSqft && req.body.sizeSqft.trim(),
 
       videoLink: req.body.videoLink || null,
       googleMapUrl: req.body.googleMapUrl || null,
@@ -263,18 +259,28 @@ exports.updateProperty = async (req, res) => {
 
     /* 🔥 IMAGE REPLACE */
     if (req.files?.propertyImages?.length) {
-      deleteFiles(property.propertyImages);
+      //deleteFiles(property.propertyImages);
+      await Promise.all(
+        property.propertyImages.map((img) => deleteFromCloudinary(img)),
+      );
+
       updateData.propertyImages = req.files.propertyImages.map(
-        (file) => `/uploads/images/${file.filename}`,
+        //(file) => `/uploads/images/${file.filename}`,
+        (file) => {
+          //console.log("File path:", file.filePath); // Debug log
+          return file.path;
+        },
       );
     }
 
     /* 🔥 BROCHURE REPLACE */
     if (req.files?.propertyBrochure?.[0]) {
       if (property.propertyBrochure) {
-        deleteFiles([property.propertyBrochure]);
+        //deleteFiles([property.propertyBrochure]);
+        await deleteFromCloudinary(property.propertyBrochure);
       }
-      updateData.propertyBrochure = `/uploads/brochures/${req.files.propertyBrochure[0].filename}`;
+      // updateData.propertyBrochure = `/uploads/brochures/${req.files.propertyBrochure[0].filename}`;
+      updateData.propertyBrochure = req.files.propertyBrochure[0].path;
     }
 
     const updatedProperty = await PropertyListing.findByIdAndUpdate(

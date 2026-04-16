@@ -1,7 +1,8 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../config/cloudinary");
 // ✅ Ensure directories exist
 const ensureDir = (dir) => {
   if (!fs.existsSync(dir)) {
@@ -79,6 +80,48 @@ const fileFilter = (req, file, cb) => {
   );
 };
 
+const newStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    if (file.fieldname === "propertyBrochure") {
+      const cleanName = file.originalname.replace(/\s+/g, "_").split(".")[0];
+
+      return {
+        folder: "uploads/brochures",
+        resource_type: "raw", // IMPORTANT for pdf
+        type: "upload",
+        format: "pdf",
+        access_mode: "public",
+        public_id: `brochure_${cleanName}_${Date.now()}`,
+      };
+    } else {
+      return {
+        folder: "uploads/images",
+        allowed_formats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "svg",
+          "avif",
+          "bmp",
+          "tiff",
+        ],
+      };
+    }
+  },
+});
+
+const newUpload = multer({
+  storage: newStorage,
+  limits: {
+    fileSize: 40 * 1024 * 1024, // increase for brochure
+    files: 11, // 10 images + 1 brochure
+  },
+  fileFilter: fileFilter,
+});
+
 const upload = multer({
   storage,
   fileFilter,
@@ -88,4 +131,4 @@ const upload = multer({
   },
 });
 
-module.exports = upload;
+module.exports = { upload, newUpload };

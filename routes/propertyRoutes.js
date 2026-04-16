@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const upload = require("../middleware/upload");
+const { upload, newUpload } = require("../middleware/upload");
 
 const {
   addProperty,
@@ -15,7 +15,7 @@ const {
 // CREATE (with images)
 router.post(
   "/",
-  upload.fields([
+  newUpload.fields([
     { name: "propertyImages", maxCount: 10 },
     { name: "propertyBrochure", maxCount: 1 },
   ]),
@@ -25,7 +25,7 @@ router.post(
 // UPDATE (with optional images)
 router.put(
   "/:id",
-  upload.fields([
+  newUpload.fields([
     { name: "propertyImages", maxCount: 10 },
     { name: "propertyBrochure", maxCount: 1 },
   ]),

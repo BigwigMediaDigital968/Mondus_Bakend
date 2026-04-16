@@ -20,7 +20,7 @@ const propertyListingSchema = new mongoose.Schema(
 
     bedroom: { type: Number, required: true },
     bathroom: { type: Number, required: true },
-    sizeSqft: { type: Number, required: true },
+    sizeSqft: { type: String, required: true },
 
     address: { type: String, required: true },
     subArea: { type: String },
