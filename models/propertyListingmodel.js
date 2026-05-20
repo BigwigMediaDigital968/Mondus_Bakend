@@ -14,12 +14,12 @@ const propertyListingSchema = new mongoose.Schema(
     propertyType: { type: String, required: true },
 
     price: {
-      type: Number,
+      type: String,
       required: true,
     },
 
-    bedroom: { type: Number, required: true },
-    bathroom: { type: Number, required: true },
+    bedroom: { type: String, required: true },
+    bathroom: { type: String, default: null },
     sizeSqft: { type: String, required: true },
 
     address: { type: String, required: true },
@@ -67,6 +67,11 @@ const propertyListingSchema = new mongoose.Schema(
     },
 
     extraHighlights: {
+      type: [String],
+      default: [],
+    },
+
+    extraInfo: {
       type: [String],
       default: [],
     },

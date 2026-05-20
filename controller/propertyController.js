@@ -4,8 +4,52 @@ const path = require("path");
 const { deleteFromCloudinary } = require("../utils/cloudinary.js");
 
 /* ================== HELPERS ================== */
-const parseArray = (value) =>
-  value ? value.split(",").map((i) => i.trim()) : [];
+const parseArray = (value) => {
+  if (!value) return [];
+  // If an array is provided (e.g. form sends multiple values), normalize and trim
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
+
+  const s = String(value);
+  const parts = [];
+  let current = "";
+
+  // Iterate characters and split on commas that are NOT escaped by an odd number of backslashes
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+
+    if (ch === ",") {
+      // Count consecutive backslashes immediately before this comma
+      let j = i - 1;
+      let backslashes = 0;
+      while (j >= 0 && s[j] === "\\") {
+        backslashes++;
+        j--;
+      }
+
+      if (backslashes % 2 === 1) {
+        // Comma is escaped: remove one escaping backslash and keep the comma
+        current = current.slice(0, current.length - 1) + ",";
+        continue;
+      }
+
+      // Regular split
+      parts.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += ch;
+  }
+
+  if (current.length) parts.push(current.trim());
+
+  // Clean up any remaining escaped backslashes (\ -> \) and remove empty items
+  return parts
+    .map((p) => p.replace(/\\\\/g, "\\"))
+    .filter((p) => p !== "");
+};
+
+const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * ================== ADD PROPERTY ==================
@@ -47,17 +91,18 @@ exports.addProperty = async (req, res) => {
 
       slug,
 
-      /* NUMBERS */
-      price: Number(req.body.price),
-      bedroom: Number(req.body.bedroom),
-      bathroom: Number(req.body.bathroom),
-      sizeSqft: req.body.sizeSqft.trim(),
+      /* NUMBERS / STRINGS */
+      price: req.body.price && String(req.body.price),
+      bedroom: req.body.bedroom && String(req.body.bedroom).trim(),
+      bathroom: req.body.bathroom && String(req.body.bathroom).trim(),
+      sizeSqft: req.body.sizeSqft && String(req.body.sizeSqft).trim(),
 
       /* ARRAYS */
       highlights: parseArray(req.body.highlights),
       featuresAmenities: parseArray(req.body.featuresAmenities),
       nearby: parseArray(req.body.nearby),
       extraHighlights: parseArray(req.body.extraHighlights),
+      extraInfo: parseArray(req.body.extraInfo),
 
       /* MEDIA / LINKS */
       videoLink: req.body.videoLink || null,
@@ -103,12 +148,18 @@ exports.getProperties = async (req, res) => {
 
     const filter = {};
 
-    if (listingType) filter.listingType = listingType;
-    if (propertyType) filter.propertyType = propertyType;
-    if (developerName) filter.developerName = developerName;
-    if (bedroom) filter.bedroom = Number(bedroom);
-    if (bathroom) filter.bathroom = Number(bathroom);
-    if (subArea) filter.subArea = subArea;
+    // Use regex filters for string fields (case-insensitive)
+    if (listingType)
+      filter.listingType = { $regex: new RegExp(`^${escapeRegex(listingType)}$`, "i") };
+    if (propertyType)
+      filter.propertyType = { $regex: new RegExp(escapeRegex(propertyType), "i") };
+    if (developerName)
+      filter.developerName = { $regex: new RegExp(escapeRegex(developerName), "i") };
+    if (bedroom)
+      filter.bedroom = { $regex: new RegExp(`^${escapeRegex(bedroom)}$`, "i") };
+    if (bathroom)
+      filter.bathroom = { $regex: new RegExp(`^${escapeRegex(bathroom)}$`, "i") };
+    if (subArea) filter.subArea = { $regex: new RegExp(escapeRegex(subArea), "i") };
     if (status !== undefined) filter.status = status === "true";
 
     /* PRICE FILTER */
@@ -237,8 +288,8 @@ exports.updateProperty = async (req, res) => {
       slug,
 
       price: req.body.price && Number(req.body.price),
-      bedroom: req.body.bedroom && Number(req.body.bedroom),
-      bathroom: req.body.bathroom && Number(req.body.bathroom),
+      bedroom: req.body.bedroom && String(req.body.bedroom).trim(),
+      bathroom: req.body.bathroom && String(req.body.bathroom).trim(),
       sizeSqft: req.body.sizeSqft && req.body.sizeSqft.trim(),
 
       videoLink: req.body.videoLink || null,
@@ -256,6 +307,8 @@ exports.updateProperty = async (req, res) => {
 
     if (req.body.extraHighlights)
       updateData.extraHighlights = parseArray(req.body.extraHighlights);
+
+    if (req.body.extraInfo) updateData.extraInfo = parseArray(req.body.extraInfo);
 
     /* 🔥 IMAGE REPLACE */
     if (req.files?.propertyImages?.length) {
