@@ -49,6 +49,15 @@ const parseArray = (value) => {
     .filter((p) => p !== "");
 };
 
+const parseNewlineArray = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
+  return String(value)
+    .split(/\r?\n/)
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+};
+
 const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
@@ -102,7 +111,7 @@ exports.addProperty = async (req, res) => {
       featuresAmenities: parseArray(req.body.featuresAmenities),
       nearby: parseArray(req.body.nearby),
       extraHighlights: parseArray(req.body.extraHighlights),
-      extraInfo: parseArray(req.body.extraInfo),
+      extraInfo: parseNewlineArray(req.body.extraInfo),
 
       /* MEDIA / LINKS */
       videoLink: req.body.videoLink || null,
@@ -287,7 +296,7 @@ exports.updateProperty = async (req, res) => {
 
       slug,
 
-      price: req.body.price && Number(req.body.price),
+      price: req.body.price && String(req.body.price),
       bedroom: req.body.bedroom && String(req.body.bedroom).trim(),
       bathroom: req.body.bathroom && String(req.body.bathroom).trim(),
       sizeSqft: req.body.sizeSqft && req.body.sizeSqft.trim(),
@@ -295,6 +304,8 @@ exports.updateProperty = async (req, res) => {
       videoLink: req.body.videoLink || null,
       googleMapUrl: req.body.googleMapUrl || null,
     };
+
+    console.log(updateData);
 
     /* ARRAY UPDATES */
     if (req.body.highlights)
@@ -308,7 +319,7 @@ exports.updateProperty = async (req, res) => {
     if (req.body.extraHighlights)
       updateData.extraHighlights = parseArray(req.body.extraHighlights);
 
-    if (req.body.extraInfo) updateData.extraInfo = parseArray(req.body.extraInfo);
+    if (req.body.extraInfo) updateData.extraInfo = parseNewlineArray(req.body.extraInfo);
 
     /* 🔥 IMAGE REPLACE */
     if (req.files?.propertyImages?.length) {
