@@ -117,7 +117,7 @@ const newUpload = multer({
   storage: newStorage,
   limits: {
     fileSize: 40 * 1024 * 1024, // increase for brochure
-    files: 11, // 10 images + 1 brochure
+    files: 21, // 10 images + 1 brochure
   },
   fileFilter: fileFilter,
 });
@@ -127,7 +127,7 @@ const upload = multer({
   fileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB per file
-    files: 11, // 10 images + 1 brochure
+    files: 21, // 10 images + 1 brochure
   },
 });
 

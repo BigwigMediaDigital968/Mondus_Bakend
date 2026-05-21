@@ -16,7 +16,7 @@ const {
 router.post(
   "/",
   newUpload.fields([
-    { name: "propertyImages", maxCount: 10 },
+    { name: "propertyImages", maxCount: 20 },
     { name: "propertyBrochure", maxCount: 1 },
   ]),
   addProperty,
@@ -26,7 +26,7 @@ router.post(
 router.put(
   "/:id",
   newUpload.fields([
-    { name: "propertyImages", maxCount: 10 },
+    { name: "propertyImages", maxCount: 20 },
     { name: "propertyBrochure", maxCount: 1 },
   ]),
   updateProperty,
