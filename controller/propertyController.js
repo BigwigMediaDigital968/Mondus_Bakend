@@ -307,6 +307,8 @@ exports.updateProperty = async (req, res) => {
         .replace(/-+/g, "-");
     }
 
+    let faqs = [];
+
     if (req.body.faqs) {
       try {
         faqs = JSON.parse(req.body.faqs)
