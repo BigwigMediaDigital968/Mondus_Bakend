@@ -117,6 +117,22 @@ exports.addProperty = async (req, res) => {
       videoLink: req.body.videoLink || null,
       googleMapUrl: req.body.googleMapUrl || null,
 
+      metaTitle: req.body.metaTitle && String(req.body.metaTitle).trim(),
+      metaDescription: req.body.metaDescription && String(req.body.metaDescription).trim(),
+      metaKeywords: req.body.metaKeywords && String(req.body.metaKeywords).trim(),
+      faqs: req.body.faqs
+        ? JSON.parse(req.body.faqs)
+          .filter(
+            (f) =>
+              f?.question?.trim() &&
+              f?.answer?.trim()
+          )
+          .map((f) => ({
+            question: f.question.trim(),
+            answer: f.answer.trim(),
+          }))
+        : [],
+
       propertyImages: images,
       propertyBrochure: brochure,
     };
@@ -291,6 +307,26 @@ exports.updateProperty = async (req, res) => {
         .replace(/-+/g, "-");
     }
 
+    if (req.body.faqs) {
+      try {
+        faqs = JSON.parse(req.body.faqs)
+          .filter(
+            (f) =>
+              f?.question?.trim() &&
+              f?.answer?.trim()
+          )
+          .map((f) => ({
+            question: f.question.trim(),
+            answer: f.answer.trim(),
+          }));
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid FAQs format",
+        });
+      }
+    }
+
     const updateData = {
       ...req.body,
 
@@ -301,8 +337,14 @@ exports.updateProperty = async (req, res) => {
       bathroom: req.body.bathroom && String(req.body.bathroom).trim(),
       sizeSqft: req.body.sizeSqft && req.body.sizeSqft.trim(),
 
+
       videoLink: req.body.videoLink || null,
       googleMapUrl: req.body.googleMapUrl || null,
+      faqs,
+      //SEO Content
+      metaTitle: req.body.metaTitle && String(req.body.metaTitle).trim(),
+      metaDescription: req.body.metaDescription && String(req.body.metaDescription).trim(),
+      metaKeywords: req.body.metaKeywords && String(req.body.metaKeywords).trim(),
     };
 
     console.log(updateData);

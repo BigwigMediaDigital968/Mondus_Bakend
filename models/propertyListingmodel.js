@@ -18,7 +18,7 @@ const propertyListingSchema = new mongoose.Schema(
       required: true,
     },
 
-    bedroom: { type: String, required: true },
+    bedroom: { type: String, },
     bathroom: { type: String, default: null },
     sizeSqft: { type: String, required: true },
 
@@ -77,6 +77,31 @@ const propertyListingSchema = new mongoose.Schema(
     },
 
     status: { type: Boolean, default: true },
+
+    metaTitle: {
+      type: String,
+      default: null,
+    },
+    metaDescription: {
+      type: String,
+      default: null,
+    },
+    metaKeywords: {
+      type: String,
+      default: null
+    },
+    faqs: [
+  {
+    question: {
+      type: String,
+      trim: true,
+    },
+    answer: {
+      type: String,
+      trim: true,
+    },
+  },
+],
   },
   { timestamps: true },
 );
